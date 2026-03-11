@@ -1,0 +1,25 @@
+{
+  "name": "aspo-cloud-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Aspro Cloud — deals (CRM) and tasks",
+  "main": "dist/index.js",
+  "bin": {
+    "aspo-cloud-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["mcp", "aspro", "crm", "tasks"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "axios": "^1.7.9",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,192 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { apiGet, apiPost } from "../client.js";
+
+interface Task {
+  id: number;
+  name: string;
+  description?: string;
+  status?: number;
+  type?: number;
+  responsible_id?: number;
+  owner_id?: number;
+  deadline?: string;
+  priority?: number;
+  module?: string;
+  model?: string;
+  model_id?: number;
+  workflow_id?: number;
+  workflow_stage_id?: number;
+  [key: string]: unknown;
+}
+
+interface ListResponse<T> {
+  total: number;
+  page: number;
+  count: number;
+  items: T[];
+}
+
+interface Workflow {
+  id: number;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface WorkflowStage {
+  id: number;
+  name: string;
+  workflow_id: number;
+  task_status?: number;
+  color?: string;
+  [key: string]: unknown;
+}
+
+export function registerTaskTools(server: McpServer): void {
+  server.tool(
+    "list_tasks",
+    "List tasks with optional filters. Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done. Type: 0=Task, 1=Inbox, 20=Event, 30=Template",
+    {
+      responsible_id: z.number().optional().describe("Filter by responsible user ID"),
+      owner_id: z.number().optional().describe("Filter by task owner (creator) user ID"),
+      status: z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
+      type: z.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
+      module: z.string().optional().describe("Module binding (e.g. 'crm')"),
+      model: z.string().optional().describe("Model binding (e.g. 'lead')"),
+      model_id: z.number().optional().describe("ID of the bound object"),
+      parent_id: z.number().optional().describe("Filter by parent task ID"),
+      archive_status: z.number().optional().describe("0=Active, 10=Archived"),
+      page: z.number().optional().describe("Page number for pagination"),
+    },
+    async (args) => {
+      const params: Record<string, unknown> = {};
+      if (args.responsible_id !== undefined) params.responsible_id = args.responsible_id;
+      if (args.owner_id !== undefined) params.owner_id = args.owner_id;
+      if (args.status !== undefined) params.status = args.status;
+      if (args.type !== undefined) params.type = args.type;
+      if (args.module !== undefined) params.module = args.module;
+      if (args.model !== undefined) params.model = args.model;
+      if (args.model_id !== undefined) params.model_id = args.model_id;
+      if (args.parent_id !== undefined) params.parent_id = args.parent_id;
+      if (args.archive_status !== undefined) params.archive_status = args.archive_status;
+      if (args.page !== undefined) params.page = args.page;
+
+      const result = await apiGet<ListResponse<Task>>("/task/tasks/list", params);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "get_task",
+    "Get a task by ID",
+    {
+      id: z.number().describe("Task ID"),
+    },
+    async (args) => {
+      const result = await apiGet<Task>(`/task/tasks/get/${args.id}`);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "create_task",
+    "Create a new task",
+    {
+      name: z.string().describe("Task name"),
+      description: z.string().optional().describe("Task description"),
+      responsible_id: z.number().optional().describe("Responsible user ID"),
+      owner_id: z.number().optional().describe("Task owner (creator) user ID"),
+      deadline: z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+      status: z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
+      priority: z.number().optional().describe("Priority level"),
+      type: z.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
+      parent_id: z.number().optional().describe("Parent task ID for subtasks"),
+      module: z.string().optional().describe("Module to bind task to (e.g. 'crm')"),
+      model: z.string().optional().describe("Model to bind task to (e.g. 'lead')"),
+      model_id: z.number().optional().describe("ID of the object to bind task to"),
+      workflow_id: z.number().optional().describe("Workflow ID"),
+      workflow_stage_id: z.number().optional().describe("Workflow stage ID"),
+      time_estimate: z.number().optional().describe("Estimated time in seconds"),
+      plan_start_date: z.string().optional().describe("Planned start date (YYYY-MM-DD)"),
+    },
+    async (args) => {
+      const result = await apiPost<Task>("/task/tasks/create", args as Record<string, unknown>);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "update_task",
+    "Update an existing task",
+    {
+      id: z.number().describe("Task ID to update"),
+      name: z.string().optional().describe("Task name"),
+      description: z.string().optional().describe("Task description"),
+      responsible_id: z.number().optional().describe("Responsible user ID"),
+      deadline: z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+      status: z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
+      priority: z.number().optional().describe("Priority level"),
+      workflow_stage_id: z.number().optional().describe("Workflow stage ID"),
+      report: z.string().optional().describe("Task completion report"),
+      rating: z.number().optional().describe("Rating: 1=Bad, 3=OK, 5=Good"),
+      archive_status: z.number().optional().describe("0=Active, 10=Archived"),
+      time_spent: z.number().optional().describe("Spent time in seconds"),
+    },
+    async (args) => {
+      const { id, ...data } = args;
+      const result = await apiPost<Task>(`/task/tasks/update/${id}`, data as Record<string, unknown>);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "delete_task",
+    "Delete a task by ID",
+    {
+      id: z.number().describe("Task ID to delete"),
+    },
+    async (args) => {
+      const result = await apiGet<{ id: number }>(`/task/tasks/delete/${args.id}`);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "list_workflows",
+    "List all task workflows",
+    {},
+    async () => {
+      const result = await apiGet<ListResponse<Workflow>>("/task/workflows/list");
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+
+  server.tool(
+    "list_workflow_stages",
+    "List workflow stages, optionally filtered by workflow",
+    {
+      workflow_id: z.number().optional().describe("Filter by workflow ID"),
+    },
+    async (args) => {
+      const params: Record<string, unknown> = {};
+      if (args.workflow_id !== undefined) params.workflow_id = args.workflow_id;
+
+      const result = await apiGet<ListResponse<WorkflowStage>>("/task/stages/list", params);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    }
+  );
+}
