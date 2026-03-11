@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerLeadTools = registerLeadTools;
 const zod_1 = require("zod");
 const client_js_1 = require("../client.js");
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_MSG = "Expected format: YYYY-MM-DD";
 function registerLeadTools(server) {
     server.tool("list_leads", "List CRM deals (leads) with optional filters", {
         pipeline_id: zod_1.z.number().optional().describe("Filter by pipeline ID"),
@@ -11,17 +13,7 @@ function registerLeadTools(server) {
         active: zod_1.z.number().optional().describe("Status: 1=in progress, 2=lost, 3=won"),
         page: zod_1.z.number().optional().describe("Page number for pagination"),
     }, async (args) => {
-        const params = {};
-        if (args.pipeline_id !== undefined)
-            params.pipeline_id = args.pipeline_id;
-        if (args.pipeline_stage_id !== undefined)
-            params.pipeline_stage_id = args.pipeline_stage_id;
-        if (args.assignee_id !== undefined)
-            params.assignee_id = args.assignee_id;
-        if (args.active !== undefined)
-            params.active = args.active;
-        if (args.page !== undefined)
-            params.page = args.page;
+        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
         const result = await (0, client_js_1.apiGet)("/crm/lead/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -42,7 +34,7 @@ function registerLeadTools(server) {
         assignee_id: zod_1.z.number().optional().describe("Responsible user ID"),
         pipeline_id: zod_1.z.number().optional().describe("Pipeline ID"),
         pipeline_stage_id: zod_1.z.number().optional().describe("Pipeline stage ID"),
-        deadline: zod_1.z.string().optional().describe("Planned closing date (YYYY-MM-DD)"),
+        deadline: zod_1.z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned closing date (YYYY-MM-DD)"),
         contact_name: zod_1.z.string().optional().describe("Contact person name"),
         contact_phone: zod_1.z.string().optional().describe("Contact phone"),
         contact_email: zod_1.z.string().optional().describe("Contact email"),
@@ -62,8 +54,8 @@ function registerLeadTools(server) {
         pipeline_id: zod_1.z.number().optional().describe("Pipeline ID"),
         pipeline_stage_id: zod_1.z.number().optional().describe("Pipeline stage ID"),
         active: zod_1.z.number().optional().describe("Status: 1=in progress, 2=lost, 3=won"),
-        deadline: zod_1.z.string().optional().describe("Planned closing date (YYYY-MM-DD)"),
-        closing_date: zod_1.z.string().optional().describe("Actual closing date (YYYY-MM-DD)"),
+        deadline: zod_1.z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned closing date (YYYY-MM-DD)"),
+        closing_date: zod_1.z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Actual closing date (YYYY-MM-DD)"),
         closing_comment: zod_1.z.string().optional().describe("Closing comment"),
         closing_status_id: zod_1.z.number().optional().describe("Loss reason ID (for lost deals)"),
         contact_name: zod_1.z.string().optional().describe("Contact person name"),
@@ -93,9 +85,7 @@ function registerLeadTools(server) {
     server.tool("list_pipeline_stages", "List pipeline stages, optionally filtered by pipeline", {
         pipeline_id: zod_1.z.number().optional().describe("Filter by pipeline ID"),
     }, async (args) => {
-        const params = {};
-        if (args.pipeline_id !== undefined)
-            params.pipeline_id = args.pipeline_id;
+        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
         const result = await (0, client_js_1.apiGet)("/crm/pipeline_stage/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

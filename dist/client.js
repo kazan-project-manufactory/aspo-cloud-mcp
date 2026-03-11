@@ -23,10 +23,24 @@ function getClient() {
     });
     return instance;
 }
+function handleAxiosError(err) {
+    if (axios_1.default.isAxiosError(err)) {
+        const status = err.response?.status ?? 0;
+        const data = err.response?.data;
+        const msg = data?.message ?? err.message;
+        throw new Error(`HTTP ${status}: ${msg}`);
+    }
+    throw err;
+}
 async function apiGet(path, params) {
     const client = getClient();
-    const response = await client.get(path, { params });
-    return response.data.response;
+    try {
+        const response = await client.get(path, { params });
+        return response.data.response;
+    }
+    catch (err) {
+        handleAxiosError(err);
+    }
 }
 async function apiPost(path, data) {
     const client = getClient();
@@ -36,9 +50,14 @@ async function apiPost(path, data) {
             formData.append(key, String(value));
         }
     }
-    const response = await client.post(path, formData, {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-    return response.data.response;
+    try {
+        const response = await client.post(path, formData, {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+        return response.data.response;
+    }
+    catch (err) {
+        handleAxiosError(err);
+    }
 }
 //# sourceMappingURL=client.js.map

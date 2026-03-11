@@ -19,10 +19,24 @@ export function getClient(): AxiosInstance {
   return instance;
 }
 
+function handleAxiosError(err: unknown): never {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status ?? 0;
+    const data = err.response?.data as Record<string, unknown> | undefined;
+    const msg = (data?.message as string) ?? err.message;
+    throw new Error(`HTTP ${status}: ${msg}`);
+  }
+  throw err;
+}
+
 export async function apiGet<T>(path: string, params?: Record<string, unknown>): Promise<T> {
   const client = getClient();
-  const response = await client.get<{ response: T }>(path, { params });
-  return response.data.response;
+  try {
+    const response = await client.get<{ response: T }>(path, { params });
+    return response.data.response;
+  } catch (err) {
+    handleAxiosError(err);
+  }
 }
 
 export async function apiPost<T>(path: string, data: Record<string, unknown>): Promise<T> {
@@ -33,8 +47,12 @@ export async function apiPost<T>(path: string, data: Record<string, unknown>): P
       formData.append(key, String(value));
     }
   }
-  const response = await client.post<{ response: T }>(path, formData, {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
-  return response.data.response;
+  try {
+    const response = await client.post<{ response: T }>(path, formData, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    return response.data.response;
+  } catch (err) {
+    handleAxiosError(err);
+  }
 }

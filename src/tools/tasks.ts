@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet, apiPost } from "../client.js";
+import { ListResponse } from "../types.js";
 
 interface Task {
   id: number;
@@ -20,13 +21,6 @@ interface Task {
   [key: string]: unknown;
 }
 
-interface ListResponse<T> {
-  total: number;
-  page: number;
-  count: number;
-  items: T[];
-}
-
 interface Workflow {
   id: number;
   name: string;
@@ -41,6 +35,11 @@ interface WorkflowStage {
   color?: string;
   [key: string]: unknown;
 }
+
+const DEADLINE_REGEX = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+const DEADLINE_MSG = "Expected YYYY-MM-DD or YYYY-MM-DD HH:MM:SS";
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_MSG = "Expected format: YYYY-MM-DD";
 
 export function registerTaskTools(server: McpServer): void {
   server.tool(
@@ -59,17 +58,9 @@ export function registerTaskTools(server: McpServer): void {
       page: z.number().optional().describe("Page number for pagination"),
     },
     async (args) => {
-      const params: Record<string, unknown> = {};
-      if (args.responsible_id !== undefined) params.responsible_id = args.responsible_id;
-      if (args.owner_id !== undefined) params.owner_id = args.owner_id;
-      if (args.status !== undefined) params.status = args.status;
-      if (args.type !== undefined) params.type = args.type;
-      if (args.module !== undefined) params.module = args.module;
-      if (args.model !== undefined) params.model = args.model;
-      if (args.model_id !== undefined) params.model_id = args.model_id;
-      if (args.parent_id !== undefined) params.parent_id = args.parent_id;
-      if (args.archive_status !== undefined) params.archive_status = args.archive_status;
-      if (args.page !== undefined) params.page = args.page;
+      const params = Object.fromEntries(
+        Object.entries(args).filter(([, v]) => v !== undefined),
+      ) as Record<string, unknown>;
 
       const result = await apiGet<ListResponse<Task>>("/task/tasks/list", params);
       return {
@@ -100,7 +91,7 @@ export function registerTaskTools(server: McpServer): void {
       description: z.string().optional().describe("Task description"),
       responsible_id: z.number().optional().describe("Responsible user ID"),
       owner_id: z.number().optional().describe("Task owner (creator) user ID"),
-      deadline: z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+      deadline: z.string().regex(DEADLINE_REGEX, DEADLINE_MSG).optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
       status: z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
       priority: z.number().optional().describe("Priority level"),
       type: z.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
@@ -111,7 +102,7 @@ export function registerTaskTools(server: McpServer): void {
       workflow_id: z.number().optional().describe("Workflow ID"),
       workflow_stage_id: z.number().optional().describe("Workflow stage ID"),
       time_estimate: z.number().optional().describe("Estimated time in seconds"),
-      plan_start_date: z.string().optional().describe("Planned start date (YYYY-MM-DD)"),
+      plan_start_date: z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned start date (YYYY-MM-DD)"),
     },
     async (args) => {
       const result = await apiPost<Task>("/task/tasks/create", args as Record<string, unknown>);
@@ -129,7 +120,7 @@ export function registerTaskTools(server: McpServer): void {
       name: z.string().optional().describe("Task name"),
       description: z.string().optional().describe("Task description"),
       responsible_id: z.number().optional().describe("Responsible user ID"),
-      deadline: z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+      deadline: z.string().regex(DEADLINE_REGEX, DEADLINE_MSG).optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
       status: z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
       priority: z.number().optional().describe("Priority level"),
       workflow_stage_id: z.number().optional().describe("Workflow stage ID"),
@@ -180,8 +171,9 @@ export function registerTaskTools(server: McpServer): void {
       workflow_id: z.number().optional().describe("Filter by workflow ID"),
     },
     async (args) => {
-      const params: Record<string, unknown> = {};
-      if (args.workflow_id !== undefined) params.workflow_id = args.workflow_id;
+      const params = Object.fromEntries(
+        Object.entries(args).filter(([, v]) => v !== undefined),
+      ) as Record<string, unknown>;
 
       const result = await apiGet<ListResponse<WorkflowStage>>("/task/stages/list", params);
       return {

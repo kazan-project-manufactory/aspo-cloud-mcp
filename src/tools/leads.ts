@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet, apiPost } from "../client.js";
+import { ListResponse } from "../types.js";
 
 interface Lead {
   id: number;
@@ -18,13 +19,6 @@ interface Lead {
   [key: string]: unknown;
 }
 
-interface ListResponse<T> {
-  total: number;
-  page: number;
-  count: number;
-  items: T[];
-}
-
 interface Pipeline {
   id: number;
   name: string;
@@ -39,6 +33,9 @@ interface PipelineStage {
   [key: string]: unknown;
 }
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_MSG = "Expected format: YYYY-MM-DD";
+
 export function registerLeadTools(server: McpServer): void {
   server.tool(
     "list_leads",
@@ -51,12 +48,9 @@ export function registerLeadTools(server: McpServer): void {
       page: z.number().optional().describe("Page number for pagination"),
     },
     async (args) => {
-      const params: Record<string, unknown> = {};
-      if (args.pipeline_id !== undefined) params.pipeline_id = args.pipeline_id;
-      if (args.pipeline_stage_id !== undefined) params.pipeline_stage_id = args.pipeline_stage_id;
-      if (args.assignee_id !== undefined) params.assignee_id = args.assignee_id;
-      if (args.active !== undefined) params.active = args.active;
-      if (args.page !== undefined) params.page = args.page;
+      const params = Object.fromEntries(
+        Object.entries(args).filter(([, v]) => v !== undefined),
+      ) as Record<string, unknown>;
 
       const result = await apiGet<ListResponse<Lead>>("/crm/lead/list", params);
       return {
@@ -89,7 +83,7 @@ export function registerLeadTools(server: McpServer): void {
       assignee_id: z.number().optional().describe("Responsible user ID"),
       pipeline_id: z.number().optional().describe("Pipeline ID"),
       pipeline_stage_id: z.number().optional().describe("Pipeline stage ID"),
-      deadline: z.string().optional().describe("Planned closing date (YYYY-MM-DD)"),
+      deadline: z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned closing date (YYYY-MM-DD)"),
       contact_name: z.string().optional().describe("Contact person name"),
       contact_phone: z.string().optional().describe("Contact phone"),
       contact_email: z.string().optional().describe("Contact email"),
@@ -115,8 +109,8 @@ export function registerLeadTools(server: McpServer): void {
       pipeline_id: z.number().optional().describe("Pipeline ID"),
       pipeline_stage_id: z.number().optional().describe("Pipeline stage ID"),
       active: z.number().optional().describe("Status: 1=in progress, 2=lost, 3=won"),
-      deadline: z.string().optional().describe("Planned closing date (YYYY-MM-DD)"),
-      closing_date: z.string().optional().describe("Actual closing date (YYYY-MM-DD)"),
+      deadline: z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned closing date (YYYY-MM-DD)"),
+      closing_date: z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Actual closing date (YYYY-MM-DD)"),
       closing_comment: z.string().optional().describe("Closing comment"),
       closing_status_id: z.number().optional().describe("Loss reason ID (for lost deals)"),
       contact_name: z.string().optional().describe("Contact person name"),
@@ -165,8 +159,9 @@ export function registerLeadTools(server: McpServer): void {
       pipeline_id: z.number().optional().describe("Filter by pipeline ID"),
     },
     async (args) => {
-      const params: Record<string, unknown> = {};
-      if (args.pipeline_id !== undefined) params.pipeline_id = args.pipeline_id;
+      const params = Object.fromEntries(
+        Object.entries(args).filter(([, v]) => v !== undefined),
+      ) as Record<string, unknown>;
 
       const result = await apiGet<ListResponse<PipelineStage>>("/crm/pipeline_stage/list", params);
       return {

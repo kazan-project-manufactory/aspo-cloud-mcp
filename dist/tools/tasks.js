@@ -3,6 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerTaskTools = registerTaskTools;
 const zod_1 = require("zod");
 const client_js_1 = require("../client.js");
+const DEADLINE_REGEX = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+const DEADLINE_MSG = "Expected YYYY-MM-DD or YYYY-MM-DD HH:MM:SS";
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_MSG = "Expected format: YYYY-MM-DD";
 function registerTaskTools(server) {
     server.tool("list_tasks", "List tasks with optional filters. Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done. Type: 0=Task, 1=Inbox, 20=Event, 30=Template", {
         responsible_id: zod_1.z.number().optional().describe("Filter by responsible user ID"),
@@ -16,27 +20,7 @@ function registerTaskTools(server) {
         archive_status: zod_1.z.number().optional().describe("0=Active, 10=Archived"),
         page: zod_1.z.number().optional().describe("Page number for pagination"),
     }, async (args) => {
-        const params = {};
-        if (args.responsible_id !== undefined)
-            params.responsible_id = args.responsible_id;
-        if (args.owner_id !== undefined)
-            params.owner_id = args.owner_id;
-        if (args.status !== undefined)
-            params.status = args.status;
-        if (args.type !== undefined)
-            params.type = args.type;
-        if (args.module !== undefined)
-            params.module = args.module;
-        if (args.model !== undefined)
-            params.model = args.model;
-        if (args.model_id !== undefined)
-            params.model_id = args.model_id;
-        if (args.parent_id !== undefined)
-            params.parent_id = args.parent_id;
-        if (args.archive_status !== undefined)
-            params.archive_status = args.archive_status;
-        if (args.page !== undefined)
-            params.page = args.page;
+        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
         const result = await (0, client_js_1.apiGet)("/task/tasks/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -55,7 +39,7 @@ function registerTaskTools(server) {
         description: zod_1.z.string().optional().describe("Task description"),
         responsible_id: zod_1.z.number().optional().describe("Responsible user ID"),
         owner_id: zod_1.z.number().optional().describe("Task owner (creator) user ID"),
-        deadline: zod_1.z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+        deadline: zod_1.z.string().regex(DEADLINE_REGEX, DEADLINE_MSG).optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
         status: zod_1.z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
         priority: zod_1.z.number().optional().describe("Priority level"),
         type: zod_1.z.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
@@ -66,7 +50,7 @@ function registerTaskTools(server) {
         workflow_id: zod_1.z.number().optional().describe("Workflow ID"),
         workflow_stage_id: zod_1.z.number().optional().describe("Workflow stage ID"),
         time_estimate: zod_1.z.number().optional().describe("Estimated time in seconds"),
-        plan_start_date: zod_1.z.string().optional().describe("Planned start date (YYYY-MM-DD)"),
+        plan_start_date: zod_1.z.string().regex(DATE_REGEX, DATE_MSG).optional().describe("Planned start date (YYYY-MM-DD)"),
     }, async (args) => {
         const result = await (0, client_js_1.apiPost)("/task/tasks/create", args);
         return {
@@ -78,7 +62,7 @@ function registerTaskTools(server) {
         name: zod_1.z.string().optional().describe("Task name"),
         description: zod_1.z.string().optional().describe("Task description"),
         responsible_id: zod_1.z.number().optional().describe("Responsible user ID"),
-        deadline: zod_1.z.string().optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
+        deadline: zod_1.z.string().regex(DEADLINE_REGEX, DEADLINE_MSG).optional().describe("Deadline date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"),
         status: zod_1.z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
         priority: zod_1.z.number().optional().describe("Priority level"),
         workflow_stage_id: zod_1.z.number().optional().describe("Workflow stage ID"),
@@ -110,9 +94,7 @@ function registerTaskTools(server) {
     server.tool("list_workflow_stages", "List workflow stages, optionally filtered by workflow", {
         workflow_id: zod_1.z.number().optional().describe("Filter by workflow ID"),
     }, async (args) => {
-        const params = {};
-        if (args.workflow_id !== undefined)
-            params.workflow_id = args.workflow_id;
+        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
         const result = await (0, client_js_1.apiGet)("/task/stages/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

@@ -1,6 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiGet } from "../client.js";
+import { ListResponse } from "../types.js";
+
+const MAX_PAGES = 50;
 
 interface User {
   id: number;
@@ -15,13 +18,6 @@ interface User {
   [key: string]: unknown;
 }
 
-interface ListResponse<T> {
-  total: number;
-  page: number;
-  count: number;
-  items: T[];
-}
-
 async function fetchAllUsers(): Promise<User[]> {
   const all: User[] = [];
   let page = 1;
@@ -29,7 +25,7 @@ async function fetchAllUsers(): Promise<User[]> {
   while (true) {
     const result = await apiGet<ListResponse<User>>("/core/user/list", { page });
     all.push(...result.items);
-    if (all.length >= result.total || result.items.length === 0) break;
+    if (all.length >= result.total || result.items.length === 0 || page >= MAX_PAGES) break;
     page++;
   }
 
@@ -39,14 +35,16 @@ async function fetchAllUsers(): Promise<User[]> {
 export function registerUserTools(server: McpServer): void {
   server.tool(
     "search_users",
-    "Search users by name. Returns id, name and username (email) — use id as responsible_id for tasks or assignee_id for deals",
+    "Search users by name or email. Returns id, name and username (email) — use id as responsible_id for tasks or assignee_id for deals",
     {
-      query: z.string().describe("Name to search for (case-insensitive partial match)"),
+      query: z.string().describe("Name or email to search for (case-insensitive partial match)"),
     },
     async (args) => {
       const users = await fetchAllUsers();
       const q = args.query.toLowerCase();
-      const matched = users.filter((u) => u.name?.toLowerCase().includes(q));
+      const matched = users.filter(
+        (u) => u.name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q),
+      );
       const result = matched.map((u) => ({
         id: u.id,
         name: u.name,
