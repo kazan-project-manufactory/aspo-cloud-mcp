@@ -20,7 +20,14 @@ function registerTaskTools(server) {
         archive_status: zod_1.z.number().optional().describe("0=Active, 10=Archived"),
         page: zod_1.z.number().optional().describe("Page number for pagination"),
     }, async (args) => {
-        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
+        const { page, ...filters } = args;
+        const params = {};
+        if (page !== undefined)
+            params.page = page;
+        for (const [key, value] of Object.entries(filters)) {
+            if (value !== undefined)
+                params[`filter[${key}]`] = value;
+        }
         const result = await (0, client_js_1.apiGet)("/task/tasks/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

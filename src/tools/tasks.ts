@@ -58,9 +58,12 @@ export function registerTaskTools(server: McpServer): void {
       page: z.number().optional().describe("Page number for pagination"),
     },
     async (args) => {
-      const params = Object.fromEntries(
-        Object.entries(args).filter(([, v]) => v !== undefined),
-      ) as Record<string, unknown>;
+      const { page, ...filters } = args;
+      const params: Record<string, unknown> = {};
+      if (page !== undefined) params.page = page;
+      for (const [key, value] of Object.entries(filters)) {
+        if (value !== undefined) params[`filter[${key}]`] = value;
+      }
 
       const result = await apiGet<ListResponse<Task>>("/task/tasks/list", params);
       return {
