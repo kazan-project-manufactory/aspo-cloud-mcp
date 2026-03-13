@@ -162,9 +162,8 @@ export function registerLeadTools(server: McpServer): void {
       pipeline_id: z.number().optional().describe("Filter by pipeline ID"),
     },
     async (args) => {
-      const params = Object.fromEntries(
-        Object.entries(args).filter(([, v]) => v !== undefined),
-      ) as Record<string, unknown>;
+      const params: Record<string, unknown> = {};
+      if (args.pipeline_id !== undefined) params["filter[pipeline_id]"] = args.pipeline_id;
 
       const result = await apiGet<ListResponse<PipelineStage>>("/crm/pipeline_stage/list", params);
       return {

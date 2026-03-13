@@ -174,9 +174,8 @@ export function registerTaskTools(server: McpServer): void {
       workflow_id: z.number().optional().describe("Filter by workflow ID"),
     },
     async (args) => {
-      const params = Object.fromEntries(
-        Object.entries(args).filter(([, v]) => v !== undefined),
-      ) as Record<string, unknown>;
+      const params: Record<string, unknown> = {};
+      if (args.workflow_id !== undefined) params["filter[workflow_id]"] = args.workflow_id;
 
       const result = await apiGet<ListResponse<WorkflowStage>>("/task/stages/list", params);
       return {
