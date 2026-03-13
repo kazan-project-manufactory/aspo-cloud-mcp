@@ -15,7 +15,7 @@ const handlers = {};
     const server = new mcp_js_1.McpServer({ name: "test", version: "0.0.1" });
     vitest_1.vi.spyOn(server, "tool").mockImplementation((_name, _desc, _schema, handler) => {
         handlers[_name] = handler;
-        return server;
+        return {};
     });
     (0, tasks_js_1.registerTaskTools)(server);
 });
@@ -41,12 +41,12 @@ const handlers = {};
             page: 2,
         });
         (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {
-            responsible_id: 5,
-            status: 3,
-            type: 0,
-            module: "crm",
-            model: "lead",
-            model_id: 12,
+            "filter[responsible_id]": 5,
+            "filter[status]": 3,
+            "filter[type]": 0,
+            "filter[module]": "crm",
+            "filter[model]": "lead",
+            "filter[model_id]": 12,
             page: 2,
         });
     });
@@ -134,7 +134,7 @@ const handlers = {};
     (0, vitest_1.it)("passes workflow_id to apiGet when provided", async () => {
         mockApiGet.mockResolvedValueOnce({ total: 4, page: 1, count: 4, items: [] });
         await handlers["list_workflow_stages"]({ workflow_id: 2 });
-        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/task/stages/list", { workflow_id: 2 });
+        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/task/stages/list", { "filter[workflow_id]": 2 });
     });
 });
 //# sourceMappingURL=tasks.test.js.map

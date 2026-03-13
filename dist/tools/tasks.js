@@ -8,17 +8,30 @@ const DEADLINE_MSG = "Expected YYYY-MM-DD or YYYY-MM-DD HH:MM:SS";
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_MSG = "Expected format: YYYY-MM-DD";
 function registerTaskTools(server) {
-    server.tool("list_tasks", "List tasks with optional filters. Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done. Type: 0=Task, 1=Inbox, 20=Event, 30=Template", {
-        responsible_id: zod_1.z.number().optional().describe("Filter by responsible user ID"),
-        owner_id: zod_1.z.number().optional().describe("Filter by task owner (creator) user ID"),
-        status: zod_1.z.number().optional().describe("Status: 1=New, 3=In Progress, 4=Waiting Review, 5=Done"),
-        type: zod_1.z.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
+    server.tool("list_tasks", `List tasks with optional filters.
+
+Status values (use 'status' param):
+  1 = New (created but not started — most tasks accumulate here as backlog)
+  3 = In Progress (actively being worked on right now)
+  4 = Waiting Review (done by assignee, pending verification)
+  5 = Done (completed but not yet archived)
+
+IMPORTANT: 'archive_status=0' means NOT archived — it does NOT mean incomplete.
+A task can be status=5 (Done) and archive_status=0 at the same time.
+To find tasks truly in progress, use status=3.
+To find all incomplete tasks, use status values 1, 3, or 4 (separately or combined).
+
+Type values: 0=Task, 1=Inbox, 20=Event, 30=Template`, {
+        responsible_id: zod_1.z.coerce.number().optional().describe("Filter by responsible user ID"),
+        owner_id: zod_1.z.coerce.number().optional().describe("Filter by task owner (creator) user ID"),
+        status: zod_1.z.coerce.number().optional().describe("Status: 1=New (backlog), 3=In Progress, 4=Waiting Review, 5=Done. Use 3 for 'currently working on', use 1 for backlog."),
+        type: zod_1.z.coerce.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
         module: zod_1.z.string().optional().describe("Module binding (e.g. 'crm')"),
         model: zod_1.z.string().optional().describe("Model binding (e.g. 'lead')"),
-        model_id: zod_1.z.number().optional().describe("ID of the bound object"),
-        parent_id: zod_1.z.number().optional().describe("Filter by parent task ID"),
-        archive_status: zod_1.z.number().optional().describe("0=Active, 10=Archived"),
-        page: zod_1.z.number().optional().describe("Page number for pagination"),
+        model_id: zod_1.z.coerce.number().optional().describe("ID of the bound object"),
+        parent_id: zod_1.z.coerce.number().optional().describe("Filter by parent task ID"),
+        archive_status: zod_1.z.coerce.number().optional().describe("0=Not archived (includes Done tasks!), 10=Archived. Omit to get all tasks regardless of archive state."),
+        page: zod_1.z.coerce.number().optional().describe("Page number for pagination"),
     }, async (args) => {
         const { page, ...filters } = args;
         const params = {};
@@ -95,7 +108,7 @@ function registerTaskTools(server) {
     server.tool("list_workflows", "List all task workflows", {}, async () => {
         const result = await (0, client_js_1.apiGet)("/task/workflows/list");
         return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
         };
     });
     server.tool("list_workflow_stages", "List workflow stages, optionally filtered by workflow", {
@@ -106,7 +119,7 @@ function registerTaskTools(server) {
             params["filter[workflow_id]"] = args.workflow_id;
         const result = await (0, client_js_1.apiGet)("/task/stages/list", params);
         return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
         };
     });
 }

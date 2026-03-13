@@ -37,6 +37,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_MSG = "Expected format: YYYY-MM-DD";
 
 export function registerLeadTools(server: McpServer): void {
+  // @ts-ignore TS2589: type instantiation depth with MCP SDK inference
   server.tool(
     "list_leads",
     "List CRM deals (leads) with optional filters",
@@ -76,6 +77,7 @@ export function registerLeadTools(server: McpServer): void {
     }
   );
 
+  // @ts-ignore TS2589: type instantiation depth with MCP SDK inference
   server.tool(
     "create_lead",
     "Create a new CRM deal (lead)",
@@ -150,7 +152,7 @@ export function registerLeadTools(server: McpServer): void {
     async () => {
       const result = await apiGet<ListResponse<Pipeline>>("/crm/pipeline/list");
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
       };
     }
   );
@@ -167,7 +169,7 @@ export function registerLeadTools(server: McpServer): void {
 
       const result = await apiGet<ListResponse<PipelineStage>>("/crm/pipeline_stage/list", params);
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
       };
     }
   );

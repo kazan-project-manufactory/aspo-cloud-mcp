@@ -24,7 +24,7 @@ function registerUserTools(server) {
         const q = args.query.toLowerCase();
         const matched = users.filter((u) => u.name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q));
         const result = matched.map((u) => ({
-            id: u.id,
+            id: Number(u.id),
             name: u.name,
             username: u.username,
             role_admin: u.role_admin,
@@ -39,7 +39,7 @@ function registerUserTools(server) {
     }, async (args) => {
         const result = await (0, client_js_1.apiGet)(`/core/user/get/${args.id}`);
         return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify({ ...result, id: Number(result.id) }, null, 2) }],
         };
     });
 }

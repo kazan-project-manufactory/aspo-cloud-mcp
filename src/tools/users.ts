@@ -6,7 +6,7 @@ import { ListResponse } from "../types.js";
 const MAX_PAGES = 50;
 
 interface User {
-  id: number;
+  id: number | string;
   name: string;
   username: string;
   image?: string;
@@ -46,7 +46,7 @@ export function registerUserTools(server: McpServer): void {
         (u) => u.name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q),
       );
       const result = matched.map((u) => ({
-        id: u.id,
+        id: Number(u.id),
         name: u.name,
         username: u.username,
         role_admin: u.role_admin,
@@ -67,7 +67,7 @@ export function registerUserTools(server: McpServer): void {
     async (args) => {
       const result = await apiGet<User>(`/core/user/get/${args.id}`);
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify({ ...result, id: Number(result.id) }, null, 2) }],
       };
     }
   );

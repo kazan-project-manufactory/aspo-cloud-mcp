@@ -13,7 +13,7 @@ const handlers = {};
     const server = new mcp_js_1.McpServer({ name: "test", version: "0.0.1" });
     vitest_1.vi.spyOn(server, "tool").mockImplementation((_name, _desc, _schema, handler) => {
         handlers[_name] = handler;
-        return server;
+        return {};
     });
     (0, users_js_1.registerUserTools)(server);
 });

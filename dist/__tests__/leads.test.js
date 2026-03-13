@@ -16,7 +16,7 @@ const handlers = {};
     // Capture each registered handler by name
     vitest_1.vi.spyOn(server, "tool").mockImplementation((_name, _desc, _schema, handler) => {
         handlers[_name] = handler;
-        return server;
+        return {};
     });
     (0, leads_js_1.registerLeadTools)(server);
 });
@@ -33,7 +33,11 @@ const handlers = {};
     (0, vitest_1.it)("passes filters to apiGet", async () => {
         mockApiGet.mockResolvedValueOnce({ total: 1, page: 1, count: 1, items: [{ id: 1, name: "Deal" }] });
         await handlers["list_leads"]({ pipeline_id: 3, active: 1, page: 2 });
-        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/crm/lead/list", { pipeline_id: 3, active: 1, page: 2 });
+        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/crm/lead/list", {
+            "filter[pipeline_id]": 3,
+            "filter[active]": 1,
+            page: 2,
+        });
     });
     (0, vitest_1.it)("returns JSON-stringified result in content[0].text", async () => {
         const data = { total: 1, page: 1, count: 1, items: [{ id: 7, name: "Lead A" }] };
@@ -119,7 +123,7 @@ const handlers = {};
     (0, vitest_1.it)("passes pipeline_id to apiGet when provided", async () => {
         mockApiGet.mockResolvedValueOnce({ total: 3, page: 1, count: 3, items: [] });
         await handlers["list_pipeline_stages"]({ pipeline_id: 7 });
-        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/crm/pipeline_stage/list", { pipeline_id: 7 });
+        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/crm/pipeline_stage/list", { "filter[pipeline_id]": 7 });
     });
 });
 //# sourceMappingURL=leads.test.js.map

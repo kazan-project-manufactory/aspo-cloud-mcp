@@ -23,7 +23,7 @@ beforeAll(() => {
   vi.spyOn(server, "tool").mockImplementation(
     (_name: string, _desc: string, _schema: unknown, handler: unknown) => {
       handlers[_name] = handler as ToolHandler;
-      return server;
+      return {} as ReturnType<typeof server.tool>;
     }
   );
   registerLeadTools(server);

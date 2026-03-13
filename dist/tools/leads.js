@@ -6,6 +6,7 @@ const client_js_1 = require("../client.js");
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_MSG = "Expected format: YYYY-MM-DD";
 function registerLeadTools(server) {
+    // @ts-ignore TS2589: type instantiation depth with MCP SDK inference
     server.tool("list_leads", "List CRM deals (leads) with optional filters", {
         pipeline_id: zod_1.z.number().optional().describe("Filter by pipeline ID"),
         pipeline_stage_id: zod_1.z.number().optional().describe("Filter by pipeline stage ID"),
@@ -34,6 +35,7 @@ function registerLeadTools(server) {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
     });
+    // @ts-ignore TS2589: type instantiation depth with MCP SDK inference
     server.tool("create_lead", "Create a new CRM deal (lead)", {
         name: zod_1.z.string().describe("Deal name"),
         description: zod_1.z.string().optional().describe("Deal description"),
@@ -86,7 +88,7 @@ function registerLeadTools(server) {
     server.tool("list_pipelines", "List all CRM sales pipelines", {}, async () => {
         const result = await (0, client_js_1.apiGet)("/crm/pipeline/list");
         return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
         };
     });
     server.tool("list_pipeline_stages", "List pipeline stages, optionally filtered by pipeline", {
@@ -97,7 +99,7 @@ function registerLeadTools(server) {
             params["filter[pipeline_id]"] = args.pipeline_id;
         const result = await (0, client_js_1.apiGet)("/crm/pipeline_stage/list", params);
         return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(result.items, null, 2) }],
         };
     });
 }
