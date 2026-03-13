@@ -56,12 +56,12 @@ describe("list_tasks", () => {
     });
 
     expect(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {
-      responsible_id: 5,
-      status: 3,
-      type: 0,
-      module: "crm",
-      model: "lead",
-      model_id: 12,
+      "filter[responsible_id]": 5,
+      "filter[status]": 3,
+      "filter[type]": 0,
+      "filter[module]": "crm",
+      "filter[model]": "lead",
+      "filter[model_id]": 12,
       page: 2,
     });
   });
@@ -187,6 +187,6 @@ describe("list_workflow_stages", () => {
 
     await handlers["list_workflow_stages"]({ workflow_id: 2 });
 
-    expect(mockApiGet).toHaveBeenCalledWith("/task/stages/list", { workflow_id: 2 });
+    expect(mockApiGet).toHaveBeenCalledWith("/task/stages/list", { "filter[workflow_id]": 2 });
   });
 });

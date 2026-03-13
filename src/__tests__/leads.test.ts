@@ -48,7 +48,11 @@ describe("list_leads", () => {
 
     await handlers["list_leads"]({ pipeline_id: 3, active: 1, page: 2 });
 
-    expect(mockApiGet).toHaveBeenCalledWith("/crm/lead/list", { pipeline_id: 3, active: 1, page: 2 });
+    expect(mockApiGet).toHaveBeenCalledWith("/crm/lead/list", {
+      "filter[pipeline_id]": 3,
+      "filter[active]": 1,
+      page: 2,
+    });
   });
 
   it("returns JSON-stringified result in content[0].text", async () => {
@@ -172,6 +176,6 @@ describe("list_pipeline_stages", () => {
 
     await handlers["list_pipeline_stages"]({ pipeline_id: 7 });
 
-    expect(mockApiGet).toHaveBeenCalledWith("/crm/pipeline_stage/list", { pipeline_id: 7 });
+    expect(mockApiGet).toHaveBeenCalledWith("/crm/pipeline_stage/list", { "filter[pipeline_id]": 7 });
   });
 });

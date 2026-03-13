@@ -92,7 +92,9 @@ function registerLeadTools(server) {
     server.tool("list_pipeline_stages", "List pipeline stages, optionally filtered by pipeline", {
         pipeline_id: zod_1.z.number().optional().describe("Filter by pipeline ID"),
     }, async (args) => {
-        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
+        const params = {};
+        if (args.pipeline_id !== undefined)
+            params["filter[pipeline_id]"] = args.pipeline_id;
         const result = await (0, client_js_1.apiGet)("/crm/pipeline_stage/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

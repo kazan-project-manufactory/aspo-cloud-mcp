@@ -101,7 +101,9 @@ function registerTaskTools(server) {
     server.tool("list_workflow_stages", "List workflow stages, optionally filtered by workflow", {
         workflow_id: zod_1.z.number().optional().describe("Filter by workflow ID"),
     }, async (args) => {
-        const params = Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined));
+        const params = {};
+        if (args.workflow_id !== undefined)
+            params["filter[workflow_id]"] = args.workflow_id;
         const result = await (0, client_js_1.apiGet)("/task/stages/list", params);
         return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
