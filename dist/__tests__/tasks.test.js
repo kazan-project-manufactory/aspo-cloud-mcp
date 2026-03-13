@@ -24,10 +24,12 @@ const handlers = {};
     mockApiPost.mockReset();
 });
 (0, vitest_1.describe)("list_tasks", () => {
-    (0, vitest_1.it)("calls apiGet with no params when no filters provided", async () => {
+    (0, vitest_1.it)("sends filter[archive_status]=0 by default when no filters provided", async () => {
         mockApiGet.mockResolvedValueOnce({ total: 0, page: 1, count: 0, items: [] });
         await handlers["list_tasks"]({});
-        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {});
+        (0, vitest_1.expect)(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {
+            "filter[archive_status]": 0,
+        });
     });
     (0, vitest_1.it)("passes all provided filters to apiGet", async () => {
         mockApiGet.mockResolvedValueOnce({ total: 1, page: 1, count: 1, items: [] });
@@ -47,6 +49,7 @@ const handlers = {};
             "filter[module]": "crm",
             "filter[model]": "lead",
             "filter[model_id]": 12,
+            "filter[archive_status]": 0,
             page: 2,
         });
     });

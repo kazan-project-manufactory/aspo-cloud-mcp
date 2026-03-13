@@ -46,32 +46,34 @@ export function registerTaskTools(server: McpServer): void {
     "list_tasks",
     `List tasks with optional filters.
 
+By default returns only NON-ARCHIVED tasks (archive_status=0).
+"Active tasks" and "tasks" always means non-archived. To get archived tasks, pass archive_status=10.
+
 Status values (use 'status' param):
   1 = New (created but not started — most tasks accumulate here as backlog)
   3 = In Progress (actively being worked on right now)
   4 = Waiting Review (done by assignee, pending verification)
   5 = Done (completed but not yet archived)
 
-IMPORTANT: 'archive_status=0' means NOT archived — it does NOT mean incomplete.
-A task can be status=5 (Done) and archive_status=0 at the same time.
-To find tasks truly in progress, use status=3.
-To find all incomplete tasks, use status values 1, 3, or 4 (separately or combined).
+To find tasks truly in progress use status=3.
+To find all incomplete tasks use status=1, 3, or 4.
 
 Type values: 0=Task, 1=Inbox, 20=Event, 30=Template`,
     {
       responsible_id: z.coerce.number().optional().describe("Filter by responsible user ID"),
       owner_id: z.coerce.number().optional().describe("Filter by task owner (creator) user ID"),
-      status: z.coerce.number().optional().describe("Status: 1=New (backlog), 3=In Progress, 4=Waiting Review, 5=Done. Use 3 for 'currently working on', use 1 for backlog."),
+      status: z.coerce.number().optional().describe("Status: 1=New (backlog), 3=In Progress, 4=Waiting Review, 5=Done. Use 3 for 'currently working on'."),
       type: z.coerce.number().optional().describe("Type: 0=Task, 1=Inbox, 20=Event, 30=Template"),
       module: z.string().optional().describe("Module binding (e.g. 'crm')"),
       model: z.string().optional().describe("Model binding (e.g. 'lead')"),
       model_id: z.coerce.number().optional().describe("ID of the bound object"),
       parent_id: z.coerce.number().optional().describe("Filter by parent task ID"),
-      archive_status: z.coerce.number().optional().describe("0=Not archived (includes Done tasks!), 10=Archived. Omit to get all tasks regardless of archive state."),
+      archive_status: z.coerce.number().optional().describe("0=Not archived (default), 10=Archived. Pass 10 to see archived tasks."),
       page: z.coerce.number().optional().describe("Page number for pagination"),
     },
     async (args) => {
       const { page, ...filters } = args;
+      if (filters.archive_status === undefined) filters.archive_status = 0;
       const params: Record<string, unknown> = {};
       if (page !== undefined) params.page = page;
       for (const [key, value] of Object.entries(filters)) {

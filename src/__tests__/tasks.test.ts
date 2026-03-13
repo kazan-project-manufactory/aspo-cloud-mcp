@@ -34,12 +34,14 @@ beforeEach(() => {
 });
 
 describe("list_tasks", () => {
-  it("calls apiGet with no params when no filters provided", async () => {
+  it("sends filter[archive_status]=0 by default when no filters provided", async () => {
     mockApiGet.mockResolvedValueOnce({ total: 0, page: 1, count: 0, items: [] });
 
     await handlers["list_tasks"]({});
 
-    expect(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {});
+    expect(mockApiGet).toHaveBeenCalledWith("/task/tasks/list", {
+      "filter[archive_status]": 0,
+    });
   });
 
   it("passes all provided filters to apiGet", async () => {
@@ -62,6 +64,7 @@ describe("list_tasks", () => {
       "filter[module]": "crm",
       "filter[model]": "lead",
       "filter[model_id]": 12,
+      "filter[archive_status]": 0,
       page: 2,
     });
   });
